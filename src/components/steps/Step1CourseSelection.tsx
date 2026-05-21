@@ -7,16 +7,19 @@ import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { fetchCourses } from "@/utils/api";
 import { categoryLabels } from "@/mocks/courses";
 
+const COURSES_PER_PAGE = 6;
+
 export default function Step1CourseSelection() {
   const { formData, setCourse, setEnrollmentType, nextStep } =
     useEnrollmentStore();
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [allCourses, setAllCourses] = useState<Course[]>([]); // 전체 강의 목록 (카운트용)
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -26,8 +29,8 @@ export default function Step1CourseSelection() {
         const data = await fetchCourses(selectedCategory || undefined);
         setCourses(data.courses);
         setCategories(data.categories);
+        setCurrentPage(1); // 카테고리 변경 시 첫 페이지로
 
-        // 전체 강의 목록 저장 (처음 로드 시에만)
         if (allCourses.length === 0) {
           const allData = await fetchCourses();
           setAllCourses(allData.courses);
@@ -43,7 +46,19 @@ export default function Step1CourseSelection() {
     loadCourses();
   }, [selectedCategory]);
 
-  // 카테고리별 강의 수 계산
+  const totalPages = Math.ceil(courses.length / COURSES_PER_PAGE);
+  const startIndex = (currentPage - 1) * COURSES_PER_PAGE;
+  const endIndex = startIndex + COURSES_PER_PAGE;
+  const currentCourses = courses.slice(startIndex, endIndex);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   const getCategoryCount = (category: string) => {
     if (category === "") {
       return allCourses.length;
@@ -67,6 +82,11 @@ export default function Step1CourseSelection() {
     setLoading(true);
     setError(null);
     setSelectedCategory(selectedCategory);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -141,89 +161,148 @@ export default function Step1CourseSelection() {
               <p className="text-gray-600">해당 카테고리에 강의가 없습니다.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {courses.map((course) => {
-                const isSelected = formData.course?.id === course.id;
-                const isFull = course.currentEnrollment >= course.maxCapacity;
-                const isAlmostFull =
-                  course.currentEnrollment >= course.maxCapacity * 0.8;
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {currentCourses.map((course) => {
+                  const isSelected = formData.course?.id === course.id;
+                  const isFull = course.currentEnrollment >= course.maxCapacity;
+                  const isAlmostFull =
+                    course.currentEnrollment >= course.maxCapacity * 0.8;
 
-                return (
-                  <div
-                    key={course.id}
-                    onClick={() => !isFull && handleCourseSelect(course)}
+                  return (
+                    <div
+                      key={course.id}
+                      onClick={() => !isFull && handleCourseSelect(course)}
+                      className={`
+                        border rounded-lg p-5 cursor-pointer transition-all
+                        ${
+                          isSelected
+                            ? "border-blue-600 bg-blue-50"
+                            : isFull
+                              ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                              : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                        }
+                      `}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {course.title}
+                        </h3>
+                        {isSelected && (
+                          <svg
+                            className="w-6 h-6 text-blue-600 shrink-0"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-600 mb-3">
+                        {course.description}
+                      </p>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">
+                          강사: {course.instructor}
+                        </span>
+                        <span className="font-semibold text-gray-900">
+                          {course.price.toLocaleString()}원
+                        </span>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between text-sm">
+                        <span className="text-gray-500">
+                          {new Date(course.startDate)
+                            .toLocaleDateString("ko-KR")
+                            .replace(/\. /g, ".")
+                            .replace(/\.$/, "")}{" "}
+                          ~{" "}
+                          {new Date(course.endDate)
+                            .toLocaleDateString("ko-KR")
+                            .replace(/\. /g, ".")
+                            .replace(/\.$/, "")}
+                        </span>
+                        <span
+                          className={`
+                            font-medium
+                            ${
+                              isFull
+                                ? "text-red-600"
+                                : isAlmostFull
+                                  ? "text-orange-600"
+                                  : "text-green-600"
+                            }
+                          `}
+                        >
+                          {isFull
+                            ? "마감"
+                            : `${course.currentEnrollment}/${course.maxCapacity}명`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mb-8">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
                     className={`
-                      border rounded-lg p-5 cursor-pointer transition-all
+                      w-8 h-8 rounded-full flex items-center justify-center transition-colors
                       ${
-                        isSelected
-                          ? "border-blue-600 bg-blue-50"
-                          : isFull
-                            ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                            : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                        currentPage === 1
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-gray-100"
                       }
                     `}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {course.title}
-                      </h3>
-                      {isSelected && (
-                        <svg
-                          className="w-6 h-6 text-blue-600 flex-shrink-0"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                    </div>
+                    ‹
+                  </button>
 
-                    <p className="text-sm text-gray-600 mb-3">
-                      {course.description}
-                    </p>
+                  {getPageNumbers().map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
+                        ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }
+                      `}
+                    >
+                      {page}
+                    </button>
+                  ))}
 
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">
-                        강사: {course.instructor}
-                      </span>
-                      <span className="font-semibold text-gray-900">
-                        {course.price.toLocaleString()}원
-                      </span>
-                    </div>
-
-                    <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between text-sm">
-                      <span className="text-gray-500">
-                        {new Date(course.startDate).toLocaleDateString()} ~{" "}
-                        {new Date(course.endDate).toLocaleDateString()}
-                      </span>
-                      <span
-                        className={`
-                          font-medium
-                          ${
-                            isFull
-                              ? "text-red-600"
-                              : isAlmostFull
-                                ? "text-orange-600"
-                                : "text-green-600"
-                          }
-                        `}
-                      >
-                        {isFull
-                          ? "마감"
-                          : `${course.currentEnrollment}/${course.maxCapacity}명`}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`
+                      w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                      ${
+                        currentPage === totalPages
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }
+                    `}
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {/* 선택된 강의 정보 */}
           {formData.course && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -232,32 +311,38 @@ export default function Step1CourseSelection() {
               <div className="space-y-2 text-sm">
                 <p>
                   <span className="text-gray-600">강의명:</span>{" "}
-                  <span className="font-large">{formData.course.title}</span>
+                  <span className="font-medium">{formData.course.title}</span>
                 </p>
                 <p>
                   <span className="text-gray-600">강사:</span>{" "}
-                  <span className="font-large">
+                  <span className="font-medium">
                     {formData.course.instructor}
                   </span>
                 </p>
                 <p>
                   <span className="text-gray-600">수강료:</span>{" "}
-                  <span className="font-large">
+                  <span className="font-medium">
                     {formData.course.price.toLocaleString()}원
                   </span>
                 </p>
                 <p>
                   <span className="text-gray-600">일정:</span>{" "}
                   <span className="font-medium">
-                    {new Date(formData.course.startDate).toLocaleDateString()} ~{" "}
-                    {new Date(formData.course.endDate).toLocaleDateString()}
+                    {new Date(formData.course.startDate)
+                      .toLocaleDateString("ko-KR")
+                      .replace(/\. /g, ".")
+                      .replace(/\.$/, "")}{" "}
+                    ~{" "}
+                    {new Date(formData.course.endDate)
+                      .toLocaleDateString("ko-KR")
+                      .replace(/\. /g, ".")
+                      .replace(/\.$/, "")}
                   </span>
                 </p>
               </div>
             </div>
           )}
 
-          {/* 신청 유형 선택 */}
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               신청 유형 선택

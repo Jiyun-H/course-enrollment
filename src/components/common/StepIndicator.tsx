@@ -20,7 +20,6 @@ export default function StepIndicator({
   onStepClick,
 }: StepIndicatorProps) {
   const handleStepClick = (stepNumber: Step) => {
-    // 완료된 스텝(파란색)만 클릭 가능
     if (stepNumber < currentStep) {
       const confirmed = window.confirm(
         "이전 단계로 이동하시겠습니까? 현재 작성 중인 정보는 저장되지 않을 수 있습니다.",
@@ -33,16 +32,14 @@ export default function StepIndicator({
 
   return (
     <div className="w-full max-w-3xl mx-auto mb-12">
-      {/* 원과 연결선 */}
       <div className="flex items-center justify-between mb-3">
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
-            {/* 스텝 원 */}
             <div
               onClick={() => handleStepClick(step.number as Step)}
               className={`
                 w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold
-                transition-colors duration-200 flex-shrink-0
+                transition-colors duration-200 shrink-0
                 ${
                   step.number === currentStep
                     ? "bg-blue-600 text-white"
@@ -55,7 +52,6 @@ export default function StepIndicator({
               {step.number}
             </div>
 
-            {/* 연결선 (마지막 스텝 제외) */}
             {index < steps.length - 1 && (
               <div
                 className={`
