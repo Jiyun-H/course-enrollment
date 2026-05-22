@@ -1,7 +1,7 @@
 // src/components/steps/Step2StudentInfo.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import PersonalForm from "./step2/PersonalForm";
 import GroupForm from "./step2/GroupForm";
@@ -15,10 +15,24 @@ export default function Step2StudentInfo() {
   );
   const [validFormData, setValidFormData] = useState<any>(null);
 
+  const handleValidDataChange = useCallback((data: any) => {
+    setValidFormData(data);
+  }, []);
+
   const handleTypeChange = (newType: "personal" | "group") => {
     if (newType === currentType) return;
 
-    if (newType === "personal" && formData.group) {
+    // 개인 → 단체
+    if (newType === "group") {
+      const confirmed = window.confirm(
+        "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보가 삭제됩니다.",
+      );
+      if (!confirmed) return;
+      updateFormData({ applicant: undefined });
+    }
+
+    // 단체 → 개인
+    if (newType === "personal") {
       const confirmed = window.confirm(
         "개인 신청으로 전환하시겠습니까?\n입력한 단체 정보가 삭제됩니다.",
       );
@@ -26,14 +40,9 @@ export default function Step2StudentInfo() {
       updateFormData({ group: undefined });
     }
 
-    if (newType === "group") {
-      const confirmed = window.confirm("단체 신청으로 전환하시겠습니까?");
-      if (!confirmed) return;
-    }
-
     setEnrollmentType(newType);
     setCurrentType(newType);
-    setValidFormData(null); // 타입 변경 시 유효 데이터 초기화
+    setValidFormData(null);
   };
 
   const handlePrevStep = () => {
@@ -44,12 +53,7 @@ export default function Step2StudentInfo() {
     if (confirmed) {
       // 데이터 초기화
       updateFormData({
-        applicant: {
-          name: "",
-          email: "",
-          phone: "",
-          motivation: "",
-        },
+        applicant: undefined,
         group: undefined,
       });
       prevStep();
@@ -62,10 +66,17 @@ export default function Step2StudentInfo() {
       return;
     }
 
-    updateFormData({
-      applicant: validFormData.applicant,
-      group: validFormData.type === "group" ? validFormData.group : undefined,
-    });
+    if (validFormData.type === "personal") {
+      updateFormData({
+        applicant: validFormData.applicant,
+        group: undefined,
+      });
+    } else {
+      updateFormData({
+        applicant: undefined,
+        group: validFormData.group,
+      });
+    }
     nextStep();
   };
 
@@ -118,9 +129,9 @@ export default function Step2StudentInfo() {
 
       {/* 조건부 폼 렌더링 */}
       {currentType === "personal" ? (
-        <PersonalForm onValidDataChange={setValidFormData} />
+        <PersonalForm onValidDataChange={handleValidDataChange} />
       ) : (
-        <GroupForm onValidDataChange={setValidFormData} />
+        <GroupForm onValidDataChange={handleValidDataChange} />
       )}
 
       {/* 버튼 (공통) */}
