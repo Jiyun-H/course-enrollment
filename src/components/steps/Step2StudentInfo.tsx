@@ -85,7 +85,7 @@ export default function Step2StudentInfo() {
       });
     } else {
       updateFormData({
-        applicant: undefined,
+        applicant: validFormData.applicant,
         group: validFormData.group,
       });
     }
