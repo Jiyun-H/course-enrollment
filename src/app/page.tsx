@@ -4,7 +4,6 @@
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import StepIndicator from "@/components/common/StepIndicator";
 import Step1CourseSelection from "@/components/steps/Step1CourseSelection";
-import Step2StudentInfo from "@/components/steps/Step2StudentInfo";
 import { Step } from "@/types/enrollment";
 
 export default function Home() {
@@ -27,7 +26,7 @@ export default function Home() {
         />
 
         {currentStep === 1 && <Step1CourseSelection />}
-        {currentStep === 2 && <Step2StudentInfo />}
+        {currentStep === 2 && <div>Step 2 (작업 예정)</div>}
         {currentStep === 3 && <div>Step 3 (작업 예정)</div>}
       </div>
     </main>

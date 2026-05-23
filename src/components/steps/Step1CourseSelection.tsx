@@ -7,7 +7,7 @@ import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { fetchCourses } from "@/utils/api";
 import { categoryLabels } from "@/mocks/courses";
 
-const COURSES_PER_PAGE = 4;
+const COURSES_PER_PAGE = 6;
 
 export default function Step1CourseSelection() {
   const { formData, setCourse, setEnrollmentType, nextStep } =
