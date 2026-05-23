@@ -15,7 +15,7 @@ export async function fetchCourses(category?: string): Promise<{
 }> {
   const url = category
     ? `${API_BASE_URL}/courses?category=${category}`
-    : `${API_BASE_URL}/courses?`;
+    : `${API_BASE_URL}/courses`;
 
   const response = await fetch(url);
 
@@ -28,20 +28,76 @@ export async function fetchCourses(category?: string): Promise<{
 
 // 수강 신청 제출
 export async function submitEnrollment(
-  data: EnrollmentFormData,
+  formData: EnrollmentFormData & { agreedToTerms: boolean },
 ): Promise<EnrollmentResponse> {
+  if (!formData.course) {
+    throw {
+      code: "INVALID_INPUT",
+      message: "강의 정보가 없습니다.",
+    } as ErrorResponse;
+  }
+
+  if (!formData.applicant) {
+    throw {
+      code: "INVALID_INPUT",
+      message: "신청자 정보가 없습니다.",
+    } as ErrorResponse;
+  }
+
+  if (formData.type === "group" && !formData.group) {
+    throw {
+      code: "INVALID_INPUT",
+      message: "단체 정보가 없습니다.",
+    } as ErrorResponse;
+  }
+
+  // API 요청 바디 구성 (과제 명세에 맞게)
+  const requestBody =
+    formData.type === "personal"
+      ? {
+          courseId: formData.course.id,
+          type: "personal" as const,
+          applicant: {
+            name: formData.applicant.name,
+            email: formData.applicant.email,
+            phone: formData.applicant.phone,
+            ...(formData.applicant.motivation && {
+              motivation: formData.applicant.motivation,
+            }),
+          },
+          agreedToTerms: formData.agreedToTerms,
+        }
+      : {
+          courseId: formData.course.id,
+          type: "group" as const,
+          applicant: {
+            name: formData.applicant.name,
+            email: formData.applicant.email,
+            phone: formData.applicant.phone,
+            ...(formData.applicant.motivation && {
+              motivation: formData.applicant.motivation,
+            }),
+          },
+          group: {
+            organizationName: formData.group!.organizationName,
+            headCount: formData.group!.headCount,
+            participants: formData.group!.participants,
+            contactPerson: formData.group!.contactPerson,
+          },
+          agreedToTerms: formData.agreedToTerms,
+        };
+
   const response = await fetch(`${API_BASE_URL}/enrollments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(requestBody),
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    // 에러 응답 처리
     const error = result as ErrorResponse;
     throw error;
   }

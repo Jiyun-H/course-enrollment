@@ -2,9 +2,11 @@
 "use client";
 
 import { GroupInfo } from "@/types/enrollment";
+import { Applicant } from "@/types/enrollment";
 import { formatPhoneNumber } from "@/utils/formatters";
 
 type Props = {
+  applicant: Applicant;
   group: GroupInfo;
   onEdit: () => void;
 };

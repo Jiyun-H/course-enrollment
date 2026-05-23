@@ -1,0 +1,109 @@
+// src/app/api/enrollments/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+// 임시 저장소 (실제로는 데이터베이스 사용)
+const enrollments: Array<{
+  enrollmentId: string;
+  courseId: string;
+  type: "personal" | "group";
+  applicant: {
+    name: string;
+    email: string;
+    phone: string;
+    motivation?: string;
+  };
+  group?: {
+    organizationName: string;
+    headCount: number;
+    participants: Array<{ name: string; email: string }>;
+    contactPerson: string;
+  };
+  status: "confirmed" | "pending";
+  enrolledAt: string;
+}> = [];
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    // 로딩 상태 표시용 (실제 API 호출 시뮬레이션)
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // 유효성 검사
+    if (
+      !body.courseId ||
+      !body.type ||
+      !body.applicant ||
+      !body.agreedToTerms
+    ) {
+      return NextResponse.json(
+        {
+          code: "INVALID_INPUT",
+          message: "필수 정보가 누락되었습니다.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // 이메일 중복 체크 (같은 강의에 이미 신청했는지)
+    const isDuplicate = enrollments.some(
+      (enrollment) =>
+        enrollment.courseId === body.courseId &&
+        enrollment.applicant.email === body.applicant.email,
+    );
+
+    if (isDuplicate) {
+      return NextResponse.json(
+        {
+          code: "DUPLICATE_ENROLLMENT",
+          message: "이미 신청한 강의입니다.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // 강의 정원 체크
+    if (Math.random() < 0.1) {
+      return NextResponse.json(
+        {
+          code: "COURSE_FULL",
+          message: "선택하신 강의의 정원이 마감되었습니다.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // 신청 ID 생성
+    const enrollmentId = `ENR-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    const enrolledAt = new Date().toISOString();
+
+    // 신청 정보 저장
+    const newEnrollment = {
+      enrollmentId,
+      courseId: body.courseId,
+      type: body.type,
+      applicant: body.applicant,
+      ...(body.group && { group: body.group }),
+      status: "confirmed" as const,
+      enrolledAt,
+    };
+
+    enrollments.push(newEnrollment);
+
+    // 성공 응답
+    return NextResponse.json({
+      enrollmentId,
+      status: "confirmed",
+      enrolledAt,
+    });
+  } catch (error) {
+    console.error("Enrollment error:", error);
+    return NextResponse.json(
+      {
+        code: "UNKNOWN_ERROR",
+        message: "신청 처리 중 오류가 발생했습니다.",
+      },
+      { status: 500 },
+    );
+  }
+}
