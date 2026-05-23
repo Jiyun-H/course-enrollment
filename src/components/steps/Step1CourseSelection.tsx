@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Course } from "@/types/enrollment";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { fetchCourses } from "@/utils/api";
@@ -10,8 +11,8 @@ import { categoryLabels } from "@/mocks/courses";
 const COURSES_PER_PAGE = 4;
 
 export default function Step1CourseSelection() {
-  const { formData, setCourse, setEnrollmentType, nextStep } =
-    useEnrollmentStore();
+  const router = useRouter();
+  const { formData, setCourse, setEnrollmentType } = useEnrollmentStore();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
@@ -75,7 +76,7 @@ export default function Step1CourseSelection() {
       alert("강의를 선택해주세요.");
       return;
     }
-    nextStep();
+    router.push("/enrollment/step/2");
   };
 
   const handleRetry = () => {

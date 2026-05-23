@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import PersonalForm from "./step2/PersonalForm";
 import GroupForm from "./step2/GroupForm";
@@ -21,8 +22,8 @@ type GroupFormData = {
 type FormData = PersonalFormData | GroupFormData | null;
 
 export default function Step2StudentInfo() {
-  const { formData, updateFormData, setEnrollmentType, nextStep, prevStep } =
-    useEnrollmentStore();
+  const router = useRouter();
+  const { formData, updateFormData, setEnrollmentType } = useEnrollmentStore();
 
   const [currentType, setCurrentType] = useState<"personal" | "group">(
     formData.type || "personal",
@@ -58,18 +59,7 @@ export default function Step2StudentInfo() {
   };
 
   const handlePrevStep = () => {
-    const confirmed = window.confirm(
-      "이전 단계로 이동하시겠습니까?\n입력한 정보가 저장되지 않을 수 있습니다.",
-    );
-
-    if (!confirmed) {
-      // 데이터 초기화
-      updateFormData({
-        applicant: undefined,
-        group: undefined,
-      });
-      prevStep();
-    }
+    router.push("/enrollment/step/1");
   };
 
   const handleNextStep = () => {
@@ -89,7 +79,7 @@ export default function Step2StudentInfo() {
         group: validFormData.group,
       });
     }
-    nextStep();
+    router.push("/enrollment/step/3");
   };
 
   return (
