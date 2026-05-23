@@ -4,13 +4,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { groupFormSchema } from "@/utils/validation";
-import { GroupInfo } from "@/types/enrollment";
+import { Applicant, GroupInfo } from "@/types/enrollment";
 import Input from "@/components/common/Input";
 import { formatPhoneNumber } from "@/utils/formatters";
 import { useEffect } from "react";
+import ApplicantInfoFields from "./ApplicationInfoFields";
 
 type GroupFormInput = {
   type: "group";
+  applicant: Applicant;
   group: GroupInfo;
 };
 
@@ -23,12 +25,19 @@ export default function GroupForm({ onValidDataChange }: Props) {
     register,
     watch,
     setValue,
+    trigger,
     formState: { errors, isValid },
   } = useForm<GroupFormInput>({
-    resolver: zodResolver(groupFormSchema) as any,
+    resolver: zodResolver(groupFormSchema),
     mode: "onChange",
     defaultValues: {
       type: "group",
+      applicant: {
+        name: "",
+        email: "",
+        phone: "",
+        motivation: "",
+      },
       group: {
         organizationName: "",
         headCount: 2,
@@ -38,8 +47,12 @@ export default function GroupForm({ onValidDataChange }: Props) {
     },
   });
 
-  const headCount = watch("group.headCount");
+  // 개별 필드 watch
+  const applicantName = watch("applicant.name");
+  const applicantEmail = watch("applicant.email");
+  const applicantPhone = watch("applicant.phone");
   const organizationName = watch("group.organizationName");
+  const headCount = watch("group.headCount");
   const contactPerson = watch("group.contactPerson");
   const participants = watch("group.participants") || [];
 
@@ -52,6 +65,12 @@ export default function GroupForm({ onValidDataChange }: Props) {
     if (isValid && isParticipantsValid) {
       onValidDataChange({
         type: "group",
+        applicant: {
+          name: applicantName,
+          email: applicantEmail,
+          phone: applicantPhone,
+          motivation: "",
+        },
         group: {
           organizationName,
           headCount: headCount || 2,
@@ -64,10 +83,13 @@ export default function GroupForm({ onValidDataChange }: Props) {
     }
   }, [
     isValid,
+    applicantName,
+    applicantEmail,
+    applicantPhone,
     organizationName,
-    contactPerson,
     headCount,
-    JSON.stringify(participants),
+    contactPerson,
+    participants,
     onValidDataChange,
   ]);
 
@@ -84,6 +106,15 @@ export default function GroupForm({ onValidDataChange }: Props) {
 
   return (
     <div>
+      {/* 신청자 정보 */}
+      <ApplicantInfoFields
+        register={register}
+        errors={errors}
+        trigger={trigger}
+        setValue={setValue}
+      />
+
+      {/* 단체 정보 */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">단체 정보</h3>
 
@@ -154,7 +185,7 @@ export default function GroupForm({ onValidDataChange }: Props) {
                       />
                       {hasNameError && (
                         <p className="mt-1 text-sm text-red-600">
-                          {errors.group?.participants[index]?.name?.message}
+                          {errors.group?.participants?.[index]?.name?.message}
                         </p>
                       )}
                     </div>
@@ -177,7 +208,7 @@ export default function GroupForm({ onValidDataChange }: Props) {
                       />
                       {hasEmailError && (
                         <p className="mt-1 text-sm text-red-600">
-                          {errors.group?.participants[index]?.email?.message}
+                          {errors.group?.participants?.[index]?.email?.message}
                         </p>
                       )}
                     </div>

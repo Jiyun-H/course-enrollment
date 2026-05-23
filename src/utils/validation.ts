@@ -126,6 +126,7 @@ export const personalFormSchema = z.object({
 
 export const groupFormSchema = z.object({
   type: z.literal("group"),
+  applicant: applicantSchema,
   group: groupInfoSchema,
 });
 

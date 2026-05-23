@@ -5,6 +5,20 @@ import { useState, useCallback } from "react";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import PersonalForm from "./step2/PersonalForm";
 import GroupForm from "./step2/GroupForm";
+import { Applicant, GroupInfo } from "@/types/enrollment";
+
+type PersonalFormData = {
+  type: "personal";
+  applicant: Applicant;
+};
+
+type GroupFormData = {
+  type: "group";
+  applicant: Applicant;
+  group: GroupInfo;
+};
+
+type FormData = PersonalFormData | GroupFormData | null;
 
 export default function Step2StudentInfo() {
   const { formData, updateFormData, setEnrollmentType, nextStep, prevStep } =
@@ -13,9 +27,9 @@ export default function Step2StudentInfo() {
   const [currentType, setCurrentType] = useState<"personal" | "group">(
     formData.type || "personal",
   );
-  const [validFormData, setValidFormData] = useState<any>(null);
+  const [validFormData, setValidFormData] = useState<FormData>(null);
 
-  const handleValidDataChange = useCallback((data: any) => {
+  const handleValidDataChange = useCallback((data: FormData) => {
     setValidFormData(data);
   }, []);
 
@@ -25,7 +39,7 @@ export default function Step2StudentInfo() {
     // 개인 → 단체
     if (newType === "group") {
       const confirmed = window.confirm(
-        "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보가 삭제됩니다.",
+        "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보는 대표 신청자 정보로 입력됩니다.",
       );
       if (!confirmed) return;
       updateFormData({ applicant: undefined });
@@ -33,9 +47,7 @@ export default function Step2StudentInfo() {
 
     // 단체 → 개인
     if (newType === "personal") {
-      const confirmed = window.confirm(
-        "개인 신청으로 전환하시겠습니까?\n입력한 단체 정보가 삭제됩니다.",
-      );
+      const confirmed = window.confirm("개인 신청으로 전환하시겠습니까?");
       if (!confirmed) return;
       updateFormData({ group: undefined });
     }
@@ -50,7 +62,7 @@ export default function Step2StudentInfo() {
       "이전 단계로 이동하시겠습니까?\n입력한 정보가 저장되지 않을 수 있습니다.",
     );
 
-    if (confirmed) {
+    if (!confirmed) {
       // 데이터 초기화
       updateFormData({
         applicant: undefined,
