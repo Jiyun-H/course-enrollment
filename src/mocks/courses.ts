@@ -34,7 +34,7 @@ export const mockCourses: Course[] = [
     category: "development",
     price: 420000,
     maxCapacity: 25,
-    currentEnrollment: 20,
+    currentEnrollment: 24, // 거의 마감 (1자리 남음)
     startDate: "2026-07-05T09:00:00Z",
     endDate: "2026-09-05T18:00:00Z",
     instructor: "박지훈",
@@ -64,55 +64,8 @@ export const mockCourses: Course[] = [
     instructor: "정수진",
   },
 
-  // Design 카테고리
-  {
-    id: "des-001",
-    title: "UI/UX 디자인 기초",
-    description: "사용자 중심 디자인의 모든 것",
-    category: "design",
-    price: 320000,
-    maxCapacity: 20,
-    currentEnrollment: 19,
-    startDate: "2026-06-10T09:00:00Z",
-    endDate: "2026-07-31T18:00:00Z",
-    instructor: "박하늘",
-  },
-  {
-    id: "des-002",
-    title: "Figma 실전 활용",
-    description: "Figma를 활용한 협업 디자인",
-    category: "design",
-    price: 250000,
-    maxCapacity: 30,
-    currentEnrollment: 8,
-    startDate: "2026-07-01T09:00:00Z",
-    endDate: "2026-08-01T18:00:00Z",
-    instructor: "최예은",
-  },
-  {
-    id: "des-003",
-    title: "모바일 앱 디자인",
-    description: "iOS/Android 디자인 가이드라인",
-    category: "design",
-    price: 360000,
-    maxCapacity: 25,
-    currentEnrollment: 16,
-    startDate: "2026-06-22T09:00:00Z",
-    endDate: "2026-08-22T18:00:00Z",
-    instructor: "김채원",
-  },
-  {
-    id: "des-004",
-    title: "브랜드 아이덴티티 디자인",
-    description: "로고부터 브랜드 시스템까지",
-    category: "design",
-    price: 340000,
-    maxCapacity: 20,
-    currentEnrollment: 12,
-    startDate: "2026-07-08T09:00:00Z",
-    endDate: "2026-09-08T18:00:00Z",
-    instructor: "이도현",
-  },
+  // Design 카테고리 - 빈 상태 테스트용 (모든 강의 제거)
+  // 이 카테고리를 선택하면 "등록 가능한 강의가 없습니다" 메시지가 표시되어야 합니다.
 
   // Marketing 카테고리
   {
@@ -146,7 +99,7 @@ export const mockCourses: Course[] = [
     category: "marketing",
     price: 350000,
     maxCapacity: 30,
-    currentEnrollment: 24,
+    currentEnrollment: 30, // 정원 초과 (COURSE_FULL 에러 테스트용)
     startDate: "2026-06-28T09:00:00Z",
     endDate: "2026-08-28T18:00:00Z",
     instructor: "박준영",
@@ -220,7 +173,7 @@ export const mockCourses: Course[] = [
     category: "business",
     price: 350000,
     maxCapacity: 25,
-    currentEnrollment: 25,
+    currentEnrollment: 25, // 정원 마감 (COURSE_FULL 에러 테스트용)
     startDate: "2026-07-20T09:00:00Z",
     endDate: "2026-09-20T18:00:00Z",
     instructor: "최재훈",
@@ -240,3 +193,23 @@ export const categoryLabels: Record<string, string> = {
   marketing: "마케팅",
   business: "비즈니스",
 };
+
+/**
+ * 테스트 시나리오:
+ *
+ * 1. 빈 상태 테스트
+ *    - Design 카테고리 선택 시 → "등록 가능한 강의가 없습니다" 메시지
+ *
+ * 2. 정원 초과 테스트
+ *    - mar-003 (퍼포먼스 마케팅): 30/30 (정원 마감)
+ *    - bus-005 (협상과 계약 실무): 25/25 (정원 마감)
+ *    - 제출 시 COURSE_FULL 에러 발생
+ *
+ * 3. 거의 마감 테스트
+ *    - dev-003 (Next.js 실전 프로젝트): 24/25 (1자리 남음)
+ *    - 단체 신청 시 정원 부족 경고 표시
+ *
+ * 4. 여유 있는 강의
+ *    - bus-001 (스타트업 경영 실무): 5/20 (여유)
+ *    - 단체 신청 10명도 가능
+ */

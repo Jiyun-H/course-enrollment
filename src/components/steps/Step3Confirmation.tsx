@@ -8,6 +8,7 @@ import { submitEnrollment } from "@/utils/api";
 import { EnrollmentResponse, ErrorResponse } from "@/types/enrollment";
 import PersonalInfoSummary from "./step3/personalInfoSummary";
 import GroupInfoSummary from "./step3/groupInfoSummary";
+import { step2FormSchema } from "@/utils/validation"; // ✅ 추가
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -38,6 +39,51 @@ export default function Step3Confirmation() {
       return;
     }
 
+    // ✅ 제출 전 최종 유효성 검증
+    try {
+      const validationData = {
+        type: formData.type,
+        applicant: formData.applicant,
+        ...(formData.type === "group" && { group: formData.group }),
+      };
+
+      const result = step2FormSchema.safeParse(validationData);
+
+      if (!result.success) {
+        console.error("Validation errors:", result.error.flatten());
+
+        // ✅ 에러 객체 구조 확인
+        const errors = result.error.flatten();
+        let errorMessage = "입력 정보를 다시 확인해주세요.\n\n";
+        const errorDetails: string[] = [];
+
+        // fieldErrors 순회하며 에러 메시지 수집
+        if (errors.fieldErrors) {
+          Object.entries(errors.fieldErrors).forEach(([field, messages]) => {
+            if (messages && Array.isArray(messages) && messages.length > 0) {
+              messages.forEach((msg) => {
+                errorDetails.push(`• ${msg}`);
+              });
+            }
+          });
+        }
+
+        if (errorDetails.length > 0) {
+          errorMessage += errorDetails.join("\n");
+          errorMessage += "\n\n2단계로 돌아가서 수정해주세요.";
+        }
+
+        alert(errorMessage);
+        return;
+      }
+    } catch (validationError) {
+      console.error("Validation error:", validationError);
+      alert(
+        "입력 정보 검증 중 오류가 발생했습니다. 2단계로 돌아가서 다시 확인해주세요.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -60,6 +106,13 @@ export default function Step3Confirmation() {
         errorMessage = "이미 신청한 강의입니다.";
       } else if (err.code === "INVALID_INPUT") {
         errorMessage = "입력 정보를 다시 확인해주세요.";
+
+        if (err.details) {
+          const detailMessages = Object.entries(err.details)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join("\n");
+          errorMessage += `\n\n상세 내용:\n${detailMessages}`;
+        }
       }
 
       setSubmitError(errorMessage);
@@ -245,7 +298,9 @@ export default function Step3Confirmation() {
               />
             </svg>
             <div className="flex-1">
-              <p className="text-red-800 font-medium mb-2">{submitError}</p>
+              <p className="text-red-800 font-medium mb-2 whitespace-pre-line">
+                {submitError}
+              </p>
               <button
                 onClick={handleRetry}
                 className="text-sm text-red-600 hover:text-red-700 underline"

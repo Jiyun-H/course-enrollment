@@ -34,9 +34,13 @@ export default function GroupApplicationInfoFields({
   setValue,
   headCount,
 }: Props) {
+  // ✅ 수정 포인트: setValue에 옵션을 추가하여 실시간 유효성 검증 트리거
   const handleContactPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
-    setValue("group.contactPerson", formatted);
+    setValue("group.contactPerson", formatted, {
+      shouldValidate: true, // 값이 바뀔 때마다 에러 검증 즉시 실행
+      shouldDirty: true, // 폼 값이 변경되었음을 명시
+    });
   };
 
   const participantCount = headCount || 2;
@@ -72,7 +76,7 @@ export default function GroupApplicationInfoFields({
         label="담당자 연락처"
         required
         {...register("group.contactPerson")}
-        onChange={handleContactPhoneChange}
+        onChange={handleContactPhoneChange} // 포맷팅 + 검증 트리거 실행
         error={errors.group?.contactPerson?.message}
         placeholder="010-1234-5678"
       />

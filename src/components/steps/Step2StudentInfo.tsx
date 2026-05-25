@@ -25,7 +25,6 @@ export default function Step2StudentInfo() {
   const router = useRouter();
   const { formData, updateFormData, setEnrollmentType } = useEnrollmentStore();
 
-  // ✅ useState 대신 formData.type 직접 사용
   const currentType = formData.type || "personal";
   const [validFormData, setValidFormData] = useState<FormData>(null);
 
@@ -53,11 +52,12 @@ export default function Step2StudentInfo() {
       updateFormData({ group: undefined });
     }
 
-    setEnrollmentType(newType); // ✅ store만 업데이트
     setValidFormData(null);
+    setEnrollmentType(newType);
   };
 
   const handlePrevStep = () => {
+    // 현재 입력된 데이터 저장
     if (validFormData) {
       if (validFormData.type === "personal") {
         updateFormData({
@@ -77,6 +77,7 @@ export default function Step2StudentInfo() {
 
   const handleNextStep = () => {
     if (!validFormData) {
+      alert("필수 정보를 모두 입력해주세요.");
       return;
     }
 
@@ -143,9 +144,23 @@ export default function Step2StudentInfo() {
 
       {/* 조건부 폼 렌더링 */}
       {currentType === "personal" ? (
-        <PersonalForm onValidDataChange={handleValidDataChange} />
+        <PersonalForm
+          key={`personal-${currentType}`}
+          onValidDataChange={handleValidDataChange}
+        />
       ) : (
-        <GroupForm onValidDataChange={handleValidDataChange} />
+        <GroupForm
+          key={`group-${currentType}`}
+          onValidDataChange={handleValidDataChange}
+        />
+      )}
+
+      {/* 디버깅 정보 */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs">
+          <p>validFormData: {validFormData ? "✅ Valid" : "❌ Invalid"}</p>
+          <p>currentType: {currentType}</p>
+        </div>
       )}
 
       {/* 버튼 (공통) */}

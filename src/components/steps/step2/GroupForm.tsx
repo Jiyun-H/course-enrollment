@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { groupFormSchema } from "@/utils/validation";
 import { Applicant, GroupInfo } from "@/types/enrollment";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import ApplicantInfoFields from "./ApplicationInfoFields";
 import GroupApplicationInfoFields from "./GroupApplicationInfoFields";
 
@@ -23,13 +23,17 @@ type Props = {
 export default function GroupForm({ onValidDataChange }: Props) {
   const { formData } = useEnrollmentStore();
 
+  const lastSentDataRef = useRef<string | null>(null);
+
   const {
     register,
     watch,
     setValue,
     trigger,
     reset,
-    formState: { errors, isValid },
+    getValues,
+    unregister, // ✅ unregister 함수 추가 (데이터 완전 삭제용)
+    formState: { errors },
   } = useForm<GroupFormInput>({
     resolver: zodResolver(groupFormSchema),
     mode: "onChange",
@@ -50,9 +54,12 @@ export default function GroupForm({ onValidDataChange }: Props) {
     },
   });
 
-  // formData가 변경되면 폼 리셋
+  // 초기 데이터 로드 (한 번만)
   useEffect(() => {
     if (formData.applicant || formData.group) {
+      const savedParticipants = formData.group?.participants || [];
+      const savedHeadCount = formData.group?.headCount || 2;
+
       reset({
         type: "group",
         applicant: {
@@ -63,65 +70,85 @@ export default function GroupForm({ onValidDataChange }: Props) {
         },
         group: {
           organizationName: formData.group?.organizationName || "",
-          headCount: formData.group?.headCount || 2,
-          participants: formData.group?.participants || [],
+          headCount: savedHeadCount,
+          participants: savedParticipants,
           contactPerson: formData.group?.contactPerson || "",
         },
       });
     }
-  }, [formData.applicant, formData.group, reset]);
+  }, [formData, reset]);
 
-  // 개별 필드 watch
-  const applicantName = watch("applicant.name");
-  const applicantEmail = watch("applicant.email");
-  const applicantPhone = watch("applicant.phone");
-  const applicantMotivation = watch("applicant.motivation");
-  const organizationName = watch("group.organizationName");
-  const headCount = watch("group.headCount");
-  const contactPerson = watch("group.contactPerson");
-  const participants = watch("group.participants") || [];
+  const watchedAll = watch();
+  const currentHeadCount = Number(watchedAll.group?.headCount) || 2;
 
+  // ✅ 인원수가 줄어들면 잉여 데이터를 완전히 폐기(unregister)하는 로직
   useEffect(() => {
-    const filledParticipants = participants.filter(
-      (p) => p?.name && p?.email,
-    ).length;
-    const isParticipantsValid = filledParticipants >= (headCount || 2);
+    const currentParticipants = getValues("group.participants") || [];
 
-    if (isValid && isParticipantsValid) {
-      onValidDataChange({
-        type: "group",
-        applicant: {
-          name: applicantName,
-          email: applicantEmail,
-          phone: applicantPhone,
-          motivation: applicantMotivation || undefined,
-        },
-        group: {
-          organizationName,
-          headCount: headCount || 2,
-          participants: participants.filter((p) => p?.name && p?.email),
-          contactPerson,
-        },
-      });
-    } else {
-      onValidDataChange(null);
+    if (currentParticipants.length > currentHeadCount) {
+      // 1. 줄어든 인원수 바깥에 있는 데이터들을 폼 메모리에서 완전히 삭제
+      for (let i = currentHeadCount; i < currentParticipants.length; i++) {
+        unregister(`group.participants.${i}`);
+      }
+
+      // 2. 배열도 잘라내어 상태 동기화
+      setValue(
+        "group.participants",
+        currentParticipants.slice(0, currentHeadCount),
+        { shouldValidate: true },
+      );
     }
-  }, [
-    isValid,
-    applicantName,
-    applicantEmail,
-    applicantPhone,
-    applicantMotivation,
-    organizationName,
-    headCount,
-    contactPerson,
-    participants,
-    onValidDataChange,
-  ]);
+  }, [currentHeadCount, getValues, setValue, unregister]);
+
+  // 유효성 검증 및 데이터 전달
+  useEffect(() => {
+    const currentValues = getValues();
+    const { applicant, group } = currentValues;
+
+    const participants = group?.participants || [];
+    const validParticipants = participants.filter(
+      (p) => p?.name?.trim() && p?.email?.trim(),
+    );
+
+    const requiredCount = Number(group?.headCount) || 2;
+    const hasExactParticipants = validParticipants.length === requiredCount;
+
+    const hasRequiredFields = !!(
+      applicant?.name?.trim() &&
+      applicant?.email?.trim() &&
+      applicant?.phone?.trim() &&
+      group?.organizationName?.trim() &&
+      group?.contactPerson?.trim()
+    );
+
+    const hasErrors = Object.keys(errors).length > 0;
+
+    if (!hasErrors && hasRequiredFields && hasExactParticipants) {
+      const validData = {
+        type: "group" as const,
+        applicant: { ...applicant },
+        group: {
+          ...group,
+          headCount: requiredCount,
+          participants: validParticipants.slice(0, requiredCount),
+        },
+      };
+
+      const dataString = JSON.stringify(validData);
+      if (lastSentDataRef.current !== dataString) {
+        lastSentDataRef.current = dataString;
+        onValidDataChange(validData);
+      }
+    } else {
+      if (lastSentDataRef.current !== null) {
+        lastSentDataRef.current = null;
+        onValidDataChange(null);
+      }
+    }
+  }, [watchedAll, errors, getValues, onValidDataChange]);
 
   return (
     <div>
-      {/* 신청자 정보 */}
       <ApplicantInfoFields
         register={register}
         errors={errors}
@@ -129,12 +156,11 @@ export default function GroupForm({ onValidDataChange }: Props) {
         setValue={setValue}
       />
 
-      {/* 단체 정보 */}
       <GroupApplicationInfoFields
         register={register}
         errors={errors}
         setValue={setValue}
-        headCount={headCount}
+        headCount={currentHeadCount}
       />
     </div>
   );

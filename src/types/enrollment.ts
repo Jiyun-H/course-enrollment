@@ -3,7 +3,10 @@ export type CourseCategory =
   | "design"
   | "marketing"
   | "business";
+
 export type EnrollmentType = "personal" | "group";
+
+export type Step = 1 | 2 | 3;
 
 export interface Course {
   id: string;
@@ -37,7 +40,6 @@ export interface GroupInfo {
   contactPerson: string;
 }
 
-// 폼 데이터 (전체)
 export interface EnrollmentFormData {
   // Step 1
   courseId: string;
@@ -52,7 +54,7 @@ export interface EnrollmentFormData {
   agreedToTerms: boolean;
 }
 
-// API 응답
+// API
 export interface EnrollmentResponse {
   enrollmentId: string;
   status: "confirmed" | "pending";
@@ -64,6 +66,3 @@ export interface ErrorResponse {
   message: string;
   details?: Record<string, string>;
 }
-
-// 스텝 타입
-export type Step = 1 | 2 | 3;
