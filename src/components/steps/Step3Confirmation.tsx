@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { submitEnrollment } from "@/utils/api";
 import { EnrollmentResponse, ErrorResponse } from "@/types/enrollment";
@@ -17,7 +18,8 @@ const formatDate = (dateString: string) => {
 };
 
 export default function Step3Confirmation() {
-  const { formData, setStep, prevStep, resetForm } = useEnrollmentStore();
+  const router = useRouter();
+  const { formData, resetForm } = useEnrollmentStore();
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -74,6 +76,15 @@ export default function Step3Confirmation() {
 
   const handleNewEnrollment = () => {
     resetForm();
+    router.push("/enrollment/step/1");
+  };
+
+  const handlePrevStep = () => {
+    router.push("/enrollment/step/2");
+  };
+
+  const handleEdit = (step: number) => {
+    router.push(`/enrollment/step/${step}`);
   };
 
   // 제출 성공 화면
@@ -161,7 +172,7 @@ export default function Step3Confirmation() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">강의 정보</h3>
           <button
-            onClick={() => setStep(1)}
+            onClick={() => handleEdit(1)}
             className="text-sm text-blue-600 hover:text-blue-700 underline"
           >
             수정
@@ -206,12 +217,16 @@ export default function Step3Confirmation() {
       {/* 신청자 정보 - 별도 컴포넌트 사용 */}
       <PersonalInfoSummary
         applicant={formData.applicant}
-        onEdit={() => setStep(2)}
+        onEdit={() => handleEdit(2)}
       />
 
       {/* 단체 정보 (조건부) - 별도 컴포넌트 사용 */}
       {formData.type === "group" && formData.group && (
-        <GroupInfoSummary group={formData.group} onEdit={() => setStep(2)} />
+        <GroupInfoSummary
+          group={formData.group}
+          applicant={formData.applicant}
+          onEdit={() => handleEdit(2)}
+        />
       )}
 
       {/* 에러 메시지 */}
@@ -267,7 +282,7 @@ export default function Step3Confirmation() {
       <div className="flex justify-between">
         <button
           type="button"
-          onClick={prevStep}
+          onClick={handlePrevStep}
           disabled={isSubmitting}
           className={`
             px-8 py-3 rounded-lg font-semibold transition-colors

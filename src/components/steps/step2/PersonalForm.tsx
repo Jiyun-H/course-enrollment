@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { personalFormSchema } from "@/utils/validation";
 import { Applicant } from "@/types/enrollment";
 import { useEffect } from "react";
+import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import ApplicantInfoFields from "./ApplicationInfoFields";
 
 type PersonalFormInput = {
@@ -17,13 +18,15 @@ type Props = {
   onValidDataChange: (data: PersonalFormInput | null) => void;
 };
 
-// src/components/steps/step2/PersonalForm.tsx
 export default function PersonalForm({ onValidDataChange }: Props) {
+  const { formData } = useEnrollmentStore();
+
   const {
     register,
     trigger,
     setValue,
     watch,
+    reset,
     formState: { errors, isValid },
   } = useForm<PersonalFormInput>({
     resolver: zodResolver(personalFormSchema),
@@ -39,6 +42,21 @@ export default function PersonalForm({ onValidDataChange }: Props) {
     },
   });
 
+  //formData가 변경되면 폼 리셋
+  useEffect(() => {
+    if (formData.applicant) {
+      reset({
+        type: "personal",
+        applicant: {
+          name: formData.applicant.name || "",
+          email: formData.applicant.email || "",
+          phone: formData.applicant.phone || "",
+          motivation: formData.applicant.motivation || "",
+        },
+      });
+    }
+  }, [formData.applicant, reset]);
+
   const name = watch("applicant.name");
   const email = watch("applicant.email");
   const phone = watch("applicant.phone");
@@ -52,7 +70,7 @@ export default function PersonalForm({ onValidDataChange }: Props) {
           name,
           email,
           phone,
-          motivation: motivation || "",
+          motivation: motivation || undefined,
         },
       });
     } else {
