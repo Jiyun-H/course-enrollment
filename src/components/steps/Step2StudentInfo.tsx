@@ -25,9 +25,8 @@ export default function Step2StudentInfo() {
   const router = useRouter();
   const { formData, updateFormData, setEnrollmentType } = useEnrollmentStore();
 
-  const [currentType, setCurrentType] = useState<"personal" | "group">(
-    formData.type || "personal",
-  );
+  // ✅ useState 대신 formData.type 직접 사용
+  const currentType = formData.type || "personal";
   const [validFormData, setValidFormData] = useState<FormData>(null);
 
   const handleValidDataChange = useCallback((data: FormData) => {
@@ -43,28 +42,41 @@ export default function Step2StudentInfo() {
         "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보는 대표 신청자 정보로 입력됩니다.",
       );
       if (!confirmed) return;
-      updateFormData({ applicant: undefined });
     }
 
     // 단체 → 개인
     if (newType === "personal") {
-      const confirmed = window.confirm("개인 신청으로 전환하시겠습니까?");
+      const confirmed = window.confirm(
+        "개인 신청으로 전환하시겠습니까?\n단체 정보가 삭제됩니다.",
+      );
       if (!confirmed) return;
       updateFormData({ group: undefined });
     }
 
-    setEnrollmentType(newType);
-    setCurrentType(newType);
+    setEnrollmentType(newType); // ✅ store만 업데이트
     setValidFormData(null);
   };
 
   const handlePrevStep = () => {
+    if (validFormData) {
+      if (validFormData.type === "personal") {
+        updateFormData({
+          applicant: validFormData.applicant,
+          group: undefined,
+        });
+      } else {
+        updateFormData({
+          applicant: validFormData.applicant,
+          group: validFormData.group,
+        });
+      }
+    }
+
     router.push("/enrollment/step/1");
   };
 
   const handleNextStep = () => {
     if (!validFormData) {
-      alert("모든 필수 항목을 올바르게 입력해주세요.");
       return;
     }
 

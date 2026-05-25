@@ -222,7 +222,11 @@ export default function Step3Confirmation() {
 
       {/* 단체 정보 (조건부) - 별도 컴포넌트 사용 */}
       {formData.type === "group" && formData.group && (
-        <GroupInfoSummary group={formData.group} onEdit={() => handleEdit(2)} />
+        <GroupInfoSummary
+          group={formData.group}
+          applicant={formData.applicant}
+          onEdit={() => handleEdit(2)}
+        />
       )}
 
       {/* 에러 메시지 */}
