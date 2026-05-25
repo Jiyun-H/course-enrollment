@@ -41,6 +41,12 @@ export default function Step2StudentInfo() {
         "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보는 대표 신청자 정보로 입력됩니다.",
       );
       if (!confirmed) return;
+
+      if (validFormData) {
+        updateFormData({
+          applicant: validFormData.applicant,
+        });
+      }
     }
 
     // 단체 → 개인
