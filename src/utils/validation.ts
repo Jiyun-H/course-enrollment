@@ -76,6 +76,9 @@ export const groupInfoSchema = z
     const nameMap = new Map<string, number[]>();
     participants.forEach((participant, index) => {
       const name = participant.name.toLowerCase().trim();
+
+      if (!name) return;
+
       if (!nameMap.has(name)) {
         nameMap.set(name, []);
       }
@@ -99,6 +102,9 @@ export const groupInfoSchema = z
     const emailMap = new Map<string, number[]>();
     participants.forEach((participant, index) => {
       const email = participant.email.toLowerCase().trim();
+      console.log("email:", email);
+      if (!email) return;
+
       if (!emailMap.has(email)) {
         emailMap.set(email, []);
       }

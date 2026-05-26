@@ -91,7 +91,7 @@ export default function GroupForm({ onValidDataChange }: Props) {
       setValue(
         "group.participants",
         currentParticipants.slice(0, currentHeadCount),
-        { shouldValidate: true },
+        { shouldValidate: false },
       );
     }
   }, [currentHeadCount, getValues, setValue, unregister]);
