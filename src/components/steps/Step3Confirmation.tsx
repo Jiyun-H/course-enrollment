@@ -1,4 +1,3 @@
-// src/components/steps/Step3Confirmation.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,17 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { submitEnrollment } from "@/utils/api";
 import { EnrollmentResponse, ErrorResponse } from "@/types/enrollment";
-import PersonalInfoSummary from "./step3/personalInfoSummary";
-import GroupInfoSummary from "./step3/groupInfoSummary";
-import { step2FormSchema } from "@/utils/validation"; // ✅ 추가
+import { step2FormSchema } from "@/utils/validation";
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}.${month}.${day}`;
-};
+import PersonalInfoSummary from "./step3/PersonalInfoSummary";
+import GroupInfoSummary from "./step3/GroupInfoSummary";
+import SuccessScreen from "./step3/SuccessScreen";
+import CourseInfoSummary from "./step3/CourseInfoSummary";
+import TermsAgreement from "./step3/TermsAgreement";
 
 export default function Step3Confirmation() {
   const router = useRouter();
@@ -29,15 +24,8 @@ export default function Step3Confirmation() {
   );
 
   const handleSubmit = async () => {
-    if (!agreedToTerms) {
-      alert("이용약관에 동의해주세요.");
-      return;
-    }
-
-    if (!formData.course) {
-      alert("강의 정보가 없습니다.");
-      return;
-    }
+    if (!agreedToTerms) return alert("이용약관에 동의해주세요.");
+    if (!formData.course) return alert("강의 정보가 없습니다.");
 
     try {
       const validationData = {
@@ -50,60 +38,43 @@ export default function Step3Confirmation() {
 
       if (!result.success) {
         console.error("Validation errors:", result.error.flatten());
-
         const errors = result.error.flatten();
         let errorMessage = "입력 정보를 다시 확인해주세요.\n\n";
-        const errorDetails: string[] = [];
 
         if (errors.fieldErrors) {
-          Object.entries(errors.fieldErrors).forEach(([field, messages]) => {
-            if (messages && Array.isArray(messages) && messages.length > 0) {
-              messages.forEach((msg) => {
-                errorDetails.push(`• ${msg}`);
-              });
-            }
-          });
+          Object.values(errors.fieldErrors)
+            .flat()
+            .forEach((msg) => {
+              if (msg) errorMessage += `• ${msg}\n`;
+            });
         }
 
-        if (errorDetails.length > 0) {
-          errorMessage += errorDetails.join("\n");
-          errorMessage += "\n\n2단계로 돌아가서 수정해주세요.";
-        }
-
-        alert(errorMessage);
-        return;
+        errorMessage += "\n2단계로 돌아가서 수정해주세요.";
+        return alert(errorMessage);
       }
     } catch (validationError) {
       console.error("Validation error:", validationError);
-      alert(
+      return alert(
         "입력 정보 검증 중 오류가 발생했습니다. 2단계로 돌아가서 다시 확인해주세요.",
       );
-      return;
     }
 
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      const response = await submitEnrollment({
-        ...formData,
-        agreedToTerms,
-      });
-
+      const response = await submitEnrollment({ ...formData, agreedToTerms });
       setSubmitSuccess(response);
     } catch (error) {
       const err = error as ErrorResponse;
-
-      // 에러 코드별 메시지
       let errorMessage = err.message || "신청 중 오류가 발생했습니다.";
 
-      if (err.code === "COURSE_FULL") {
+      if (err.code === "COURSE_FULL")
         errorMessage = "선택하신 강의의 정원이 마감되었습니다.";
-      } else if (err.code === "DUPLICATE_ENROLLMENT") {
+      else if (err.code === "DUPLICATE_ENROLLMENT")
         errorMessage = "이미 신청한 강의입니다.";
-      } else if (err.code === "INVALID_INPUT") {
+      else if (err.code === "INVALID_INPUT") {
         errorMessage = "입력 정보를 다시 확인해주세요.";
-
         if (err.details) {
           const detailMessages = Object.entries(err.details)
             .map(([field, message]) => `${field}: ${message}`)
@@ -111,17 +82,10 @@ export default function Step3Confirmation() {
           errorMessage += `\n\n상세 내용:\n${detailMessages}`;
         }
       }
-
       setSubmitError(errorMessage);
-      console.error("Enrollment error:", error);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleRetry = () => {
-    setSubmitError(null);
-    setSubmitSuccess(null);
   };
 
   const handleNewEnrollment = () => {
@@ -129,95 +93,17 @@ export default function Step3Confirmation() {
     router.push("/enrollment/step/1");
   };
 
-  const handlePrevStep = () => {
-    router.push("/enrollment/step/2");
-  };
-
   const handleEdit = (step: number) => {
     router.push(`/enrollment/step/${step}`);
   };
 
-  // 제출 성공 화면
   if (submitSuccess) {
     return (
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg
-              className="w-8 h-8 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            수강 신청이 완료되었습니다!
-          </h2>
-
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <div className="text-sm text-gray-600 mb-2">신청 번호</div>
-            <div className="text-2xl font-bold text-blue-600 mb-4">
-              {submitSuccess.enrollmentId}
-            </div>
-
-            <div className="text-sm text-gray-600 mb-2">신청 일시</div>
-            <div className="text-gray-900">
-              {new Date(submitSuccess.enrolledAt).toLocaleString("ko-KR")}
-            </div>
-          </div>
-
-          <div className="text-left bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3">신청 내역</h3>
-            <div className="space-y-2 text-sm">
-              <p>
-                <span className="text-gray-600">강의명:</span>{" "}
-                <span className="font-medium">{formData.course?.title}</span>
-              </p>
-              <p>
-                <span className="text-gray-600">신청자:</span>{" "}
-                <span className="font-medium">{formData.applicant.name}</span>
-              </p>
-              <p>
-                <span className="text-gray-600">신청 유형:</span>{" "}
-                <span className="font-medium">
-                  {formData.type === "personal" ? "개인 신청" : "단체 신청"}
-                </span>
-              </p>
-              {formData.type === "group" && formData.group && (
-                <p>
-                  <span className="text-gray-600">단체명:</span>{" "}
-                  <span className="font-medium">
-                    {formData.group.organizationName}
-                  </span>
-                </p>
-              )}
-              {formData.type === "group" && formData.group && (
-                <p>
-                  <span className="text-gray-600">신청인원:</span>{" "}
-                  <span className="font-medium">
-                    {formData.group.headCount}
-                  </span>
-                </p>
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={handleNewEnrollment}
-            className="px-8 py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
-            새 신청하기
-          </button>
-        </div>
-      </div>
+      <SuccessScreen
+        submitSuccess={submitSuccess}
+        formData={formData}
+        onNewEnrollment={handleNewEnrollment}
+      />
     );
   }
 
@@ -225,60 +111,17 @@ export default function Step3Confirmation() {
     <div className="w-full max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-8">3단계: 확인 및 제출</h2>
 
-      {/* 강의 정보 */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">강의 정보</h3>
-          <button
-            onClick={() => handleEdit(1)}
-            className="text-sm text-blue-600 hover:text-blue-700 underline"
-          >
-            수정
-          </button>
-        </div>
+      <CourseInfoSummary
+        course={formData.course}
+        type={formData.type}
+        onEdit={() => handleEdit(1)}
+      />
 
-        {formData.course ? (
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="text-gray-600">강의명:</span>{" "}
-              <span className="font-medium">{formData.course.title}</span>
-            </p>
-            <p>
-              <span className="text-gray-600">강사:</span>{" "}
-              <span className="font-medium">{formData.course.instructor}</span>
-            </p>
-            <p>
-              <span className="text-gray-600">수강료:</span>{" "}
-              <span className="font-medium">
-                {formData.course.price.toLocaleString()}원
-              </span>
-            </p>
-            <p>
-              <span className="text-gray-600">일정:</span>{" "}
-              <span className="font-medium">
-                {formatDate(formData.course.startDate)} ~{" "}
-                {formatDate(formData.course.endDate)}
-              </span>
-            </p>
-            <p>
-              <span className="text-gray-600">신청 유형:</span>{" "}
-              <span className="font-medium">
-                {formData.type === "personal" ? "개인 신청" : "단체 신청"}
-              </span>
-            </p>
-          </div>
-        ) : (
-          <p className="text-gray-500">강의 정보가 없습니다.</p>
-        )}
-      </div>
-
-      {/* 신청자 정보 - 별도 컴포넌트 사용 */}
       <PersonalInfoSummary
         applicant={formData.applicant}
         onEdit={() => handleEdit(2)}
       />
 
-      {/* 단체 정보 (조건부) - 별도 컴포넌트 사용 */}
       {formData.type === "group" && formData.group && (
         <GroupInfoSummary
           group={formData.group}
@@ -287,12 +130,11 @@ export default function Step3Confirmation() {
         />
       )}
 
-      {/* 에러 메시지 */}
       {submitError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div className="flex items-start">
             <svg
-              className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0"
+              className="w-5 h-5 text-red-600 mt-0.5 mr-3 shrink-0"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -302,50 +144,28 @@ export default function Step3Confirmation() {
                 clipRule="evenodd"
               />
             </svg>
-            <div className="flex-1">
-              <p className="text-red-800 font-medium mb-2 whitespace-pre-line">
-                {submitError}
-              </p>
-            </div>
+            <p className="flex-1 text-red-800 font-medium mb-2 whitespace-pre-line">
+              {submitError}
+            </p>
           </div>
         </div>
       )}
 
-      {/* 이용약관 동의 */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-        <label className="flex items-start cursor-pointer">
-          <input
-            type="checkbox"
-            checked={agreedToTerms}
-            onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-          />
-          <span className="ml-3 text-sm text-gray-700">
-            <span className="font-medium">이용약관 및 개인정보 처리방침</span>에
-            동의합니다. (필수)
-            <br />
-            <span className="text-gray-500 text-xs">
-              수강 신청을 위해서는 이용약관 및 개인정보 처리방침에 동의가
-              필요합니다.
-            </span>
-          </span>
-        </label>
-      </div>
+      <TermsAgreement
+        agreedToTerms={agreedToTerms}
+        onAgreeChange={setAgreedToTerms}
+      />
 
-      {/* 버튼 */}
       <div className="flex justify-between">
         <button
           type="button"
-          onClick={handlePrevStep}
+          onClick={() => handleEdit(2)}
           disabled={isSubmitting}
-          className={`
-            px-8 py-3 rounded-lg font-semibold transition-colors
-            ${
-              isSubmitting
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "text-gray-700 bg-gray-100 hover:bg-gray-200"
-            }
-          `}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${
+            isSubmitting
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "text-gray-700 bg-gray-100 hover:bg-gray-200"
+          }`}
         >
           이전 단계
         </button>
@@ -353,14 +173,11 @@ export default function Step3Confirmation() {
           type="button"
           onClick={handleSubmit}
           disabled={!agreedToTerms || isSubmitting}
-          className={`
-            px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2
-            ${
-              !agreedToTerms || isSubmitting
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "text-white bg-blue-600 hover:bg-blue-700"
-            }
-          `}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 ${
+            !agreedToTerms || isSubmitting
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "text-white bg-blue-600 hover:bg-blue-700"
+          }`}
         >
           {isSubmitting ? (
             <>

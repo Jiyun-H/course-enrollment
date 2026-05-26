@@ -1,4 +1,3 @@
-// src/components/steps/step3/GroupInfoSummary.tsx
 "use client";
 
 import { GroupInfo } from "@/types/enrollment";

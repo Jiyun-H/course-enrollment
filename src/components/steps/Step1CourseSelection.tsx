@@ -1,4 +1,3 @@
-// src/components/steps/Step1CourseSelection.tsx
 "use client";
 
 import { useState, useEffect } from "react";
