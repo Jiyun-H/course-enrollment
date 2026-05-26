@@ -42,6 +42,12 @@ npm install
 
 # 개발 서버 실행
 npm run dev
+
+# 테스트 실행
+  npm test
+
+# 변경 감지 모드
+npm run test:watch
 ```
 
 브라우저에서 `http://localhost:3000` 에 접속하면 강의 목록 페이지(Step1)로 리다이렉트
