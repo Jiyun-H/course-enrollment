@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 const enrollments: Array<{
   enrollmentId: string;
   courseId: string;
+  courseCurrentEnrollment: number;
+  courseMaxCapacity: number;
   type: "personal" | "group";
   applicant: {
     name: string;
@@ -63,7 +65,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 강의 정원 체크
-    if (Math.random() < 0.1) {
+    const incomingCount =
+      body.type === "group" ? body.group?.headCount || 0 : 1;
+    const currentEnrollment = body.courseCurrentEnrollment;
+    const maxCapacity = body.courseMaxCapacity;
+
+    if (currentEnrollment + incomingCount > maxCapacity) {
       return NextResponse.json(
         {
           code: "COURSE_FULL",
@@ -81,6 +88,8 @@ export async function POST(request: NextRequest) {
     const newEnrollment = {
       enrollmentId,
       courseId: body.courseId,
+      courseCurrentEnrollment: body.courseCurrentEnrollment,
+      courseMaxCapacity: body.courseMaxCapacity,
       type: body.type,
       applicant: body.applicant,
       ...(body.group && { group: body.group }),

@@ -56,6 +56,8 @@ export async function submitEnrollment(
     formData.type === "personal"
       ? {
           courseId: formData.course.id,
+          courseCurrentEnrollment: formData.course.currentEnrollment,
+          courseMaxCapacity: formData.course.maxCapacity,
           type: "personal" as const,
           applicant: {
             name: formData.applicant.name,
@@ -69,6 +71,8 @@ export async function submitEnrollment(
         }
       : {
           courseId: formData.course.id,
+          courseCurrentEnrollment: formData.course.currentEnrollment,
+          courseMaxCapacity: formData.course.maxCapacity,
           type: "group" as const,
           applicant: {
             name: formData.applicant.name,

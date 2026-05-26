@@ -39,7 +39,6 @@ export default function Step3Confirmation() {
       return;
     }
 
-    // ✅ 제출 전 최종 유효성 검증
     try {
       const validationData = {
         type: formData.type,
@@ -52,12 +51,10 @@ export default function Step3Confirmation() {
       if (!result.success) {
         console.error("Validation errors:", result.error.flatten());
 
-        // ✅ 에러 객체 구조 확인
         const errors = result.error.flatten();
         let errorMessage = "입력 정보를 다시 확인해주세요.\n\n";
         const errorDetails: string[] = [];
 
-        // fieldErrors 순회하며 에러 메시지 수집
         if (errors.fieldErrors) {
           Object.entries(errors.fieldErrors).forEach(([field, messages]) => {
             if (messages && Array.isArray(messages) && messages.length > 0) {
@@ -202,6 +199,14 @@ export default function Step3Confirmation() {
                   </span>
                 </p>
               )}
+              {formData.type === "group" && formData.group && (
+                <p>
+                  <span className="text-gray-600">신청인원:</span>{" "}
+                  <span className="font-medium">
+                    {formData.group.headCount}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -301,12 +306,6 @@ export default function Step3Confirmation() {
               <p className="text-red-800 font-medium mb-2 whitespace-pre-line">
                 {submitError}
               </p>
-              <button
-                onClick={handleRetry}
-                className="text-sm text-red-600 hover:text-red-700 underline"
-              >
-                다시 시도
-              </button>
             </div>
           </div>
         </div>
