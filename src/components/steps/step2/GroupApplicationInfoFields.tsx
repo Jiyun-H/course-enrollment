@@ -41,6 +41,16 @@ export default function GroupApplicationInfoFields({
     });
   };
 
+  const updateHeadCount = (amount: number) => {
+    const newCount = headCount + amount;
+
+    if (newCount >= 2 && newCount <= 10) {
+      setValue("group.headCount", newCount, {
+        shouldDirty: true,
+      });
+    }
+  };
+
   const participantCount = headCount || 2;
   const participantIndexes = Array.from(
     { length: participantCount },
@@ -59,16 +69,44 @@ export default function GroupApplicationInfoFields({
         placeholder="회사명 또는 단체명"
       />
 
-      <Input
-        label="신청 인원수"
-        type="number"
-        required
-        {...register("group.headCount", { valueAsNumber: true })}
-        error={errors.group?.headCount?.message}
-        placeholder="2"
-        min={2}
-        max={10}
-      />
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          신청 인원수 <span className="text-red-500 ml-1">*</span>
+        </label>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => updateHeadCount(-1)}
+              disabled={headCount <= 2}
+              className="px-2 py-1 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border-r border-gray-300 text-base font-bold transition-colors"
+            >
+              －
+            </button>
+            <div className="px-4 py-2 bg-white min-w-12 text-center font-semibold text-sm">
+              {headCount}
+            </div>
+            <button
+              type="button"
+              onClick={() => updateHeadCount(1)}
+              disabled={headCount >= 10}
+              className="px-2 py-1 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border-l border-gray-300 text-base font-bold transition-colors"
+            >
+              ＋
+            </button>
+          </div>
+          <span className="text-sm text-gray-500">(최소 2명 ~ 최대 10명)</span>
+        </div>
+        <input
+          type="hidden"
+          {...register("group.headCount", { valueAsNumber: true })}
+        />
+        {errors.group?.headCount?.message && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.group.headCount.message}
+          </p>
+        )}
+      </div>
 
       <Input
         label="담당자 연락처"
