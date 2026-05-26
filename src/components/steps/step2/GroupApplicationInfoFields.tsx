@@ -1,4 +1,3 @@
-// src/components/steps/step2/GroupApplicationInfoFields.tsx
 "use client";
 
 import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
@@ -34,12 +33,11 @@ export default function GroupApplicationInfoFields({
   setValue,
   headCount,
 }: Props) {
-  // ✅ 수정 포인트: setValue에 옵션을 추가하여 실시간 유효성 검증 트리거
   const handleContactPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
     setValue("group.contactPerson", formatted, {
-      shouldValidate: true, // 값이 바뀔 때마다 에러 검증 즉시 실행
-      shouldDirty: true, // 폼 값이 변경되었음을 명시
+      shouldValidate: true,
+      shouldDirty: true,
     });
   };
 
@@ -76,7 +74,7 @@ export default function GroupApplicationInfoFields({
         label="담당자 연락처"
         required
         {...register("group.contactPerson")}
-        onChange={handleContactPhoneChange} // 포맷팅 + 검증 트리거 실행
+        onChange={handleContactPhoneChange}
         error={errors.group?.contactPerson?.message}
         placeholder="010-1234-5678"
       />
@@ -90,63 +88,34 @@ export default function GroupApplicationInfoFields({
 
         <div className="space-y-4">
           {participantIndexes.map((index) => {
-            const hasNameError = errors.group?.participants?.[index]?.name;
-            const hasEmailError = errors.group?.participants?.[index]?.email;
+            const nameError =
+              errors.group?.participants?.[index]?.name?.message;
+            const emailError =
+              errors.group?.participants?.[index]?.email?.message;
 
             return (
               <div
                 key={index}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="bg-gray-50 border border-gray-200 rounded-lg p-4"
               >
-                <div className="text-sm font-medium text-gray-700 mb-3">
+                <div className="text-sm font-bold text-blue-600 mb-4">
                   참가자 {index + 1}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* 이름 필드 */}
-                  <div>
-                    <input
-                      {...register(`group.participants.${index}.name`)}
-                      placeholder="이름"
-                      className={`
-                        w-full px-4 py-2 border rounded-lg transition-colors
-                        ${
-                          hasNameError
-                            ? "border-red-500"
-                            : "border-gray-300 focus:border-blue-500"
-                        }
-                        focus:outline-none focus:ring-2
-                      `}
-                    />
-                    {hasNameError && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.group?.participants?.[index]?.name?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 이메일 필드 */}
-                  <div>
-                    <input
-                      {...register(`group.participants.${index}.email`)}
-                      type="email"
-                      placeholder="이메일"
-                      className={`
-                        w-full px-4 py-2 border rounded-lg transition-colors
-                        ${
-                          hasEmailError
-                            ? "border-red-500"
-                            : "border-gray-300 focus:border-blue-500"
-                        }
-                        focus:outline-none focus:ring-2
-                      `}
-                    />
-                    {hasEmailError && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.group?.participants?.[index]?.email?.message}
-                      </p>
-                    )}
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <Input
+                    label="이름"
+                    placeholder="이름"
+                    {...register(`group.participants.${index}.name`)}
+                    error={nameError}
+                  />
+                  <Input
+                    label="이메일"
+                    type="email"
+                    placeholder="이메일"
+                    {...register(`group.participants.${index}.email`)}
+                    error={emailError}
+                  />
                 </div>
               </div>
             );

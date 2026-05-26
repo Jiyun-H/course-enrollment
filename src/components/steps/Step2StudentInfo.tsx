@@ -37,9 +37,7 @@ export default function Step2StudentInfo() {
 
     // 개인 → 단체
     if (newType === "group") {
-      const confirmed = window.confirm(
-        "단체 신청으로 전환하시겠습니까?\n입력한 개인 정보는 대표 신청자 정보로 입력됩니다.",
-      );
+      const confirmed = window.confirm("단체 신청으로 전환됩니다.");
       if (!confirmed) return;
 
       if (validFormData) {
@@ -52,7 +50,7 @@ export default function Step2StudentInfo() {
     // 단체 → 개인
     if (newType === "personal") {
       const confirmed = window.confirm(
-        "개인 신청으로 전환하시겠습니까?\n단체 정보가 삭제됩니다.",
+        "개인 신청으로 전환됩니다\n입력하신 단체 정보는 삭제됩니다.",
       );
       if (!confirmed) return;
       updateFormData({ group: undefined });
@@ -159,14 +157,6 @@ export default function Step2StudentInfo() {
           key={`group-${currentType}`}
           onValidDataChange={handleValidDataChange}
         />
-      )}
-
-      {/* 디버깅 정보 */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs">
-          <p>validFormData: {validFormData ? "✅ Valid" : "❌ Invalid"}</p>
-          <p>currentType: {currentType}</p>
-        </div>
       )}
 
       {/* 버튼 (공통) */}

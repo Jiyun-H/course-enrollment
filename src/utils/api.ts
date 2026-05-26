@@ -51,7 +51,6 @@ export async function submitEnrollment(
     } as ErrorResponse;
   }
 
-  // API 요청 바디 구성 (과제 명세에 맞게)
   const requestBody =
     formData.type === "personal"
       ? {

@@ -32,7 +32,7 @@ export default function GroupForm({ onValidDataChange }: Props) {
     trigger,
     reset,
     getValues,
-    unregister, // ✅ unregister 함수 추가 (데이터 완전 삭제용)
+    unregister,
     formState: { errors },
   } = useForm<GroupFormInput>({
     resolver: zodResolver(groupFormSchema),
@@ -54,7 +54,6 @@ export default function GroupForm({ onValidDataChange }: Props) {
     },
   });
 
-  // 초기 데이터 로드 (한 번만)
   useEffect(() => {
     if (formData.applicant || formData.group) {
       const savedParticipants = formData.group?.participants || [];
@@ -81,17 +80,14 @@ export default function GroupForm({ onValidDataChange }: Props) {
   const watchedAll = watch();
   const currentHeadCount = Number(watchedAll.group?.headCount) || 2;
 
-  // ✅ 인원수가 줄어들면 잉여 데이터를 완전히 폐기(unregister)하는 로직
   useEffect(() => {
     const currentParticipants = getValues("group.participants") || [];
 
     if (currentParticipants.length > currentHeadCount) {
-      // 1. 줄어든 인원수 바깥에 있는 데이터들을 폼 메모리에서 완전히 삭제
       for (let i = currentHeadCount; i < currentParticipants.length; i++) {
         unregister(`group.participants.${i}`);
       }
 
-      // 2. 배열도 잘라내어 상태 동기화
       setValue(
         "group.participants",
         currentParticipants.slice(0, currentHeadCount),
@@ -100,7 +96,6 @@ export default function GroupForm({ onValidDataChange }: Props) {
     }
   }, [currentHeadCount, getValues, setValue, unregister]);
 
-  // 유효성 검증 및 데이터 전달
   useEffect(() => {
     const currentValues = getValues();
     const { applicant, group } = currentValues;

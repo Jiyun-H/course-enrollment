@@ -12,8 +12,6 @@ export default function EnrollmentLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-
-  // URL에서 현재 step 추출
   const currentStep = parseInt(pathname.split("/").pop() || "1") as Step;
 
   const handleStepClick = (step: Step) => {

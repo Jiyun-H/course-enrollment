@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const category = searchParams.get("category");
 
-  //로딩 상태 표시용
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const filteredCourses = category
