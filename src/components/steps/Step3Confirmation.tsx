@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useEnrollmentStore } from "@/stores/enrollmentStore";
 import { submitEnrollment } from "@/utils/api";
@@ -22,6 +22,28 @@ export default function Step3Confirmation() {
   const [submitSuccess, setSubmitSuccess] = useState<EnrollmentResponse | null>(
     null,
   );
+
+  // 성공 화면에 보여줄 데이터를 백업
+  const [finalFormData, setFinalFormData] = useState<typeof formData | null>(
+    null,
+  );
+
+  // 제출 성공 시 브라우저 뒤로가기 방지
+  useEffect(() => {
+    if (submitSuccess) {
+      window.history.pushState(null, "", window.location.href);
+
+      const handlePopState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [submitSuccess]);
 
   const handleSubmit = async () => {
     if (!agreedToTerms) return alert("이용약관에 동의해주세요.");
@@ -64,6 +86,13 @@ export default function Step3Confirmation() {
 
     try {
       const response = await submitEnrollment({ ...formData, agreedToTerms });
+
+      // 스토어를 비우기 전, 성공 화면에 전달할 데이터를 로컬에 백업
+      setFinalFormData(formData);
+
+      //재 제출 차단
+      resetForm();
+
       setSubmitSuccess(response);
     } catch (error) {
       const err = error as ErrorResponse;
@@ -89,7 +118,6 @@ export default function Step3Confirmation() {
   };
 
   const handleNewEnrollment = () => {
-    resetForm();
     router.push("/enrollment/step/1");
   };
 
@@ -97,11 +125,11 @@ export default function Step3Confirmation() {
     router.push(`/enrollment/step/${step}`);
   };
 
-  if (submitSuccess) {
+  if (submitSuccess && finalFormData) {
     return (
       <SuccessScreen
         submitSuccess={submitSuccess}
-        formData={formData}
+        formData={finalFormData}
         onNewEnrollment={handleNewEnrollment}
       />
     );
