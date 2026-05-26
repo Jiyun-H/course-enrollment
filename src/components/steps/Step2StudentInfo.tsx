@@ -85,6 +85,21 @@ export default function Step2StudentInfo() {
       return;
     }
 
+    if (formData.course) {
+      const { maxCapacity, currentEnrollment } = formData.course;
+      const remainingCapacity = maxCapacity - currentEnrollment;
+
+      const requestedCount =
+        validFormData.type === "group" ? validFormData.group.headCount : 1;
+
+      if (requestedCount > remainingCapacity) {
+        alert(
+          `현재 선택하신 강의의 잔여 정원은 ${remainingCapacity}명입니다.\n신청 인원(${requestedCount}명)이 정원을 초과했습니다.`,
+        );
+        return;
+      }
+    }
+
     if (validFormData.type === "personal") {
       updateFormData({
         applicant: validFormData.applicant,
@@ -96,6 +111,7 @@ export default function Step2StudentInfo() {
         group: validFormData.group,
       });
     }
+
     router.push("/enrollment/step/3");
   };
 

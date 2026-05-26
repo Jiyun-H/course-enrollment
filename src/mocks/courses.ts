@@ -22,7 +22,7 @@ export const mockCourses: Course[] = [
     category: "development",
     price: 280000,
     maxCapacity: 25,
-    currentEnrollment: 18,
+    currentEnrollment: 22,
     startDate: "2026-06-20T09:00:00Z",
     endDate: "2026-07-20T18:00:00Z",
     instructor: "이서준",
